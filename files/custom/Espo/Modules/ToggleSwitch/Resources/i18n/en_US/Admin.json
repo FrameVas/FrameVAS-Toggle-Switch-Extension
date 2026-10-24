@@ -1,0 +1,21 @@
+{
+    "fields": {
+        "displayAsToggle": "Display as Toggle Switch",
+        "toggleInstantSave": "Fast Inline Edit (Save on Click)",
+        "toggleSize": "Toggle: Size",
+        "toggleOnLabel": "Toggle: YES Text",
+        "toggleOnIcon": "Toggle: YES Icon",
+        "toggleOnStyle": "Toggle: YES Color",
+        "toggleOffLabel": "Toggle: NO Text",
+        "toggleOffIcon": "Toggle: NO Icon",
+        "toggleOffStyle": "Toggle: NO Color",
+        "togglePreview": "Toggle: Preview"
+    },
+    "options": {
+        "toggleSize": {
+            "small": "Small",
+            "medium": "Medium",
+            "large": "Large"
+        }
+    }
+}

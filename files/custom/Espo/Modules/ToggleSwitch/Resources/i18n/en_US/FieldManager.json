@@ -1,0 +1,10 @@
+{
+    "tooltips": {
+        "displayAsToggle": "Show this field as an ON/OFF switch instead of a checkbox in detail, edit and list views. Search filters keep the standard Yes/No control. The stored value does not change.",
+        "toggleInstantSave": "Clicking the switch saves the value right away, on the record page and in list views. EspoCRM list views have no inline edit of their own, so this is the only way to change the value directly in a list. Users still need permission to edit the record and the field; read-only fields and fields with inline edit disabled stay locked.",
+        "toggleOnLabel": "Text inside the switch when the value is YES. Leave empty to show \"Yes\" in each user's language, or only the icon if a YES icon is selected. Common words such as Yes, On, Active or Enabled are shown in the user's language.",
+        "toggleOffLabel": "Text inside the switch when the value is NO. Leave empty to show \"No\" in each user's language, or only the icon if a NO icon is selected. Common words such as No, Off, Inactive or Disabled are shown in the user's language.",
+        "toggleOnIcon": "Icon shown inside the switch when the value is YES, from EspoCRM's icon library. It appears before the YES text; leave the text empty to show only the icon.",
+        "toggleOffIcon": "Icon shown inside the switch when the value is NO, from EspoCRM's icon library. It appears before the NO text; leave the text empty to show only the icon."
+    }
+}

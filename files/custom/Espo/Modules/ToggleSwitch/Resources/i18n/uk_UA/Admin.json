@@ -1,0 +1,21 @@
+{
+    "fields": {
+        "displayAsToggle": "Відображати як перемикач",
+        "toggleInstantSave": "Швидке редагування (збереження по кліку)",
+        "toggleSize": "Перемикач: розмір",
+        "toggleOnLabel": "Перемикач: текст ТАК",
+        "toggleOnIcon": "Перемикач: іконка ТАК",
+        "toggleOnStyle": "Перемикач: колір ТАК",
+        "toggleOffLabel": "Перемикач: текст НІ",
+        "toggleOffIcon": "Перемикач: іконка НІ",
+        "toggleOffStyle": "Перемикач: колір НІ",
+        "togglePreview": "Перемикач: попередній перегляд"
+    },
+    "options": {
+        "toggleSize": {
+            "small": "Малий",
+            "medium": "Середній",
+            "large": "Великий"
+        }
+    }
+}

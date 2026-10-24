@@ -1,0 +1,21 @@
+{
+    "labels": {
+        "Yes": "Yes",
+        "No": "No",
+        "On": "On",
+        "Off": "Off",
+        "ON": "ON",
+        "OFF": "OFF",
+        "YES": "YES",
+        "NO": "NO",
+        "Active": "Active",
+        "Inactive": "Inactive",
+        "Enabled": "Enabled",
+        "Disabled": "Disabled",
+        "Approved": "Approved",
+        "Not Approved": "Not Approved"
+    },
+    "messages": {
+        "previewInactive": "Enable \"Display as Toggle Switch\" to use this look."
+    }
+}

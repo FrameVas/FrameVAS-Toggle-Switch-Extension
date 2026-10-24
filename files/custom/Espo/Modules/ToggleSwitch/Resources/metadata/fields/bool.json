@@ -1,0 +1,89 @@
+{
+    "view": "toggle-switch:views/fields/bool",
+    "params": [
+        "__APPEND__",
+        {
+            "name": "displayAsToggle",
+            "type": "bool",
+            "tooltip": true
+        },
+        {
+            "name": "toggleInstantSave",
+            "type": "bool",
+            "tooltip": true
+        },
+        {
+            "name": "toggleSize",
+            "type": "enum",
+            "options": [
+                "small",
+                "medium",
+                "large"
+            ],
+            "default": "medium",
+            "view": "toggle-switch:views/admin/field-manager/fields/toggle-enum"
+        },
+        {
+            "name": "toggleOnLabel",
+            "type": "varchar",
+            "maxLength": 40,
+            "trim": true,
+            "tooltip": true
+        },
+        {
+            "name": "toggleOnIcon",
+            "type": "varchar",
+            "maxLength": 100,
+            "tooltip": true,
+            "view": "toggle-switch:views/admin/field-manager/fields/toggle-icon"
+        },
+        {
+            "name": "toggleOnStyle",
+            "type": "enum",
+            "options": [
+                "default",
+                "success",
+                "danger",
+                "warning",
+                "info",
+                "primary"
+            ],
+            "default": "success",
+            "view": "toggle-switch:views/admin/field-manager/fields/toggle-style"
+        },
+        {
+            "name": "toggleOffLabel",
+            "type": "varchar",
+            "maxLength": 40,
+            "trim": true,
+            "tooltip": true
+        },
+        {
+            "name": "toggleOffIcon",
+            "type": "varchar",
+            "maxLength": 100,
+            "tooltip": true,
+            "view": "toggle-switch:views/admin/field-manager/fields/toggle-icon"
+        },
+        {
+            "name": "toggleOffStyle",
+            "type": "enum",
+            "options": [
+                "default",
+                "success",
+                "danger",
+                "warning",
+                "info",
+                "primary"
+            ],
+            "default": "default",
+            "view": "toggle-switch:views/admin/field-manager/fields/toggle-style"
+        },
+        {
+            "name": "togglePreview",
+            "type": "varchar",
+            "readOnly": true,
+            "view": "toggle-switch:views/admin/field-manager/fields/toggle-preview"
+        }
+    ]
+}

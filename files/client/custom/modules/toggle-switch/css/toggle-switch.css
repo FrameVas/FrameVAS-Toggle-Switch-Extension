@@ -1,0 +1,225 @@
+/*
+ * Toggle Switch for Boolean Fields
+ *
+ * The native checkbox (.tgs-input) holds the state; the track and knob follow it via :checked,
+ * so the switch updates instantly without re-rendering. Colors come from the active theme
+ * (CSS variables) unless a custom color is set on the field.
+ */
+
+.tgs {
+    --tgs-h: 24px;
+    --tgs-pad: 3px;
+    --tgs-font: 11px;
+    --tgs-knob: calc(var(--tgs-h) - 2 * var(--tgs-pad));
+    --tgs-edge: calc(var(--tgs-h) / 2.4);
+    --tgs-on-bg: var(--brand-success, #6fc374);
+    --tgs-on-fg: #ffffff;
+    --tgs-off-bg: var(--label-default-bg, #999999);
+    --tgs-off-fg: #ffffff;
+
+    position: relative;
+    display: inline-flex;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    vertical-align: middle;
+    font-weight: 600;
+    line-height: 1;
+    cursor: default;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.tgs-small {
+    --tgs-h: 18px;
+    --tgs-pad: 2px;
+    --tgs-font: 10px;
+}
+
+.tgs-medium {
+    --tgs-h: 24px;
+    --tgs-pad: 3px;
+    --tgs-font: 11px;
+}
+
+.tgs-large {
+    --tgs-h: 30px;
+    --tgs-pad: 3px;
+    --tgs-font: 13px;
+}
+
+/* The real checkbox sits invisibly on top so clicks, focus and keyboard work natively. */
+.tgs > .tgs-input {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    opacity: 0;
+    cursor: inherit;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.tgs-track {
+    position: relative;
+    display: inline-grid;
+    align-items: center;
+    box-sizing: border-box;
+    max-width: 100%;
+    min-width: calc(var(--tgs-h) * 2);
+    height: var(--tgs-h);
+    border-radius: calc(var(--tgs-h) / 2);
+    background-color: var(--tgs-off-bg);
+    color: var(--tgs-off-fg);
+    font-size: var(--tgs-font);
+    letter-spacing: 0.02em;
+    transition: background-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+/* Both texts share one grid cell, so the width never jumps between states. */
+.tgs-text {
+    grid-area: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4em;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.tgs-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tgs-icon {
+    flex: none;
+    font-size: 1.1em;
+    line-height: 1;
+}
+
+.tgs-text-on {
+    padding-left: var(--tgs-edge);
+    padding-right: calc(var(--tgs-knob) + var(--tgs-pad) + 4px);
+    visibility: hidden;
+}
+
+.tgs-text-off {
+    padding-left: calc(var(--tgs-knob) + var(--tgs-pad) + 4px);
+    padding-right: var(--tgs-edge);
+}
+
+.tgs-knob {
+    position: absolute;
+    top: var(--tgs-pad);
+    left: var(--tgs-pad);
+    width: var(--tgs-knob);
+    height: var(--tgs-knob);
+    border-radius: 50%;
+    background-color: #ffffff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    transition: left 0.18s ease, opacity 0.18s ease;
+}
+
+/* ON state */
+.tgs-input:checked + .tgs-track {
+    background-color: var(--tgs-on-bg);
+    color: var(--tgs-on-fg);
+}
+
+.tgs-input:checked + .tgs-track .tgs-text-on {
+    visibility: visible;
+}
+
+.tgs-input:checked + .tgs-track .tgs-text-off {
+    visibility: hidden;
+}
+
+.tgs-input:checked + .tgs-track .tgs-knob {
+    left: calc(100% - var(--tgs-knob) - var(--tgs-pad));
+}
+
+/* Interaction */
+.tgs.tgs-interactive {
+    cursor: pointer;
+}
+
+.tgs.tgs-interactive:hover .tgs-track {
+    box-shadow: inset 0 0 0 100px rgba(0, 0, 0, 0.07);
+}
+
+.tgs.tgs-interactive:active .tgs-knob {
+    opacity: 0.85;
+}
+
+.tgs-input:focus-visible + .tgs-track {
+    outline: 2px solid var(--input-border-focus, #66afe9);
+    outline-offset: 2px;
+}
+
+.tgs.tgs-busy {
+    cursor: progress;
+}
+
+.tgs.tgs-busy .tgs-knob {
+    opacity: 0.55;
+}
+
+/* Instant save makes the pencil (inline edit) link redundant. */
+.cell.tgs-cell-instant > .inline-edit-link {
+    display: none !important;
+}
+
+/* Field Manager: YES/NO color picker (same menu as EspoCRM's option style picker) */
+.tgs-style-picker {
+    display: block;
+    width: 100%;
+}
+
+.tgs-style-picker > .tgs-style-button {
+    position: relative;
+    width: 100%;
+    padding-right: 28px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.tgs-style-picker > .tgs-style-button > .caret {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    margin-top: -2px;
+}
+
+.tgs-style-picker > .tgs-style-menu {
+    min-width: 180px;
+}
+
+/* Field Manager preview */
+.tgs-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    min-height: 32px;
+}
+
+.tgs-preview.tgs-preview-inactive {
+    opacity: 0.45;
+}
+
+.tgs-preview-note {
+    margin-top: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tgs-track,
+    .tgs-knob {
+        transition: none;
+    }
+}
