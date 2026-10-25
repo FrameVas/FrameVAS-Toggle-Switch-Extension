@@ -1,4 +1,4 @@
-# Перемикач для булевих полів (Toggle Switch for Boolean Fields)
+# FrameVAS - Toggle Switch for Boolean Fields
 
 ![EspoCRM 9.0+](https://img.shields.io/badge/EspoCRM-9.0%2B-2f6bb3)
 ![PHP 8.3+](https://img.shields.io/badge/PHP-8.3%2B-777bb4)
@@ -30,12 +30,8 @@
 
 ## Вимоги
 
-| Компонент | Версія |
-|---|---|
-| EspoCRM | 9.0.0 або новіша |
-| PHP | 8.3 або новіша |
-
-Перевірено на EspoCRM 9.0.0, 9.3.10 та 10.0.10 з PHP 8.3.
+- EspoCRM 9.0 або новіша (перевірено на EspoCRM 10)
+- PHP 8.3 або новіша
 
 ## Встановлення
 

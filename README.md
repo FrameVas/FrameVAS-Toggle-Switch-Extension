@@ -1,4 +1,4 @@
-# Toggle Switch for Boolean Fields
+# FrameVAS - Toggle Switch for Boolean Fields
 
 ![EspoCRM 9.0+](https://img.shields.io/badge/EspoCRM-9.0%2B-2f6bb3)
 ![PHP 8.3+](https://img.shields.io/badge/PHP-8.3%2B-777bb4)
@@ -30,12 +30,8 @@ Small checkboxes are easy to miss. When a team works with many on/off settings, 
 
 ## Requirements
 
-| Component | Version |
-|---|---|
-| EspoCRM | 9.0.0 or higher |
-| PHP | 8.3 or higher |
-
-Tested on EspoCRM 9.0.0, 9.3.10 and 10.0.10 with PHP 8.3.
+- EspoCRM 9.0 or newer (tested on EspoCRM 10)
+- PHP 8.3 or newer
 
 ## Installation
 
