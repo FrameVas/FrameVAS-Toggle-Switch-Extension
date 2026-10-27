@@ -5,7 +5,39 @@
  * "Display as Toggle Switch" disabled, every method falls through to the core view,
  * so standard checkboxes behave exactly as before. Search filters always use the core control.
  */
-define('toggle-switch:views/fields/bool', ['views/fields/bool', 'toggle-switch:helper'], (BoolFieldView, Helper) => {
+define(
+    'toggle-switch:views/fields/bool',
+    ['views/fields/bool', 'toggle-switch:helper', 'dynamic-logic'],
+    (BoolFieldView, Helper, DynamicLogic) => {
+
+    /**
+     * Collects the record attributes a Dynamic Logic condition group reads.
+     * Special attributes such as $user.id and $user.teamsIds are not record data.
+     *
+     * @param {*} item
+     * @param {Set<string>} result
+     */
+    function collectAttributes(item, result) {
+        if (!item || typeof item !== 'object') {
+            return;
+        }
+
+        if (Array.isArray(item)) {
+            item.forEach(it => collectAttributes(it, result));
+
+            return;
+        }
+
+        if (['and', 'or', 'not'].includes(item.type)) {
+            collectAttributes(item.value, result);
+
+            return;
+        }
+
+        if (typeof item.attribute === 'string' && item.attribute && !item.attribute.startsWith('$')) {
+            result.add(item.attribute);
+        }
+    }
 
     return class extends BoolFieldView {
 
@@ -54,7 +86,26 @@ define('toggle-switch:views/fields/bool', ['views/fields/bool', 'toggle-switch:h
                 return false;
             }
 
-            if (this.readOnly || this.disabled || this.inlineEditDisabled) {
+            if (this.disabled || this.inlineEditDisabled) {
+                return false;
+            }
+
+            if (this.isListMode()) {
+                // List rows and Kanban cards. Kanban creates every card field with `readOnly: true`
+                // only to display it, so here the field's own read-only settings count
+                // (read-only, read-only after create), plus Dynamic Logic, which the core runs
+                // on record pages only.
+                if (this.readOnlyLocked) {
+                    return false;
+                }
+
+                // true: read-only by a rule; null: the data a rule needs is still loading.
+                if (this.getLogicReadOnlyState() !== false) {
+                    return false;
+                }
+            }
+            else if (this.readOnly) {
+                // Record page: the record view already applies Dynamic Logic via setReadOnly().
                 return false;
             }
 
@@ -70,10 +121,30 @@ define('toggle-switch:views/fields/bool', ['views/fields/bool', 'toggle-switch:h
 
             const acl = this.getAcl();
 
-            // List rows only carry the layout columns plus assignedUserId/createdById. For "team"
-            // access, multiple assigned users and collaborators the client can't decide (null).
-            // Then the click is allowed and the server decides; a refusal flips the switch back.
-            if (acl.checkModel(this.model, 'edit', true) === false) {
+            let access = acl.checkModel(this.model, 'edit', true);
+
+            if (access === null && this.isListMode()) {
+                // List rows only carry the layout columns plus assignedUserId/createdById. "Team"
+                // access, multiple assigned users and collaborators need more: load it for the
+                // whole list (one request), keeping the switch locked meanwhile.
+                const aclAttributes = this.getAclAttributes();
+
+                if (aclAttributes.length && !this.isLogicDataReady(this.model, aclAttributes)) {
+                    const request = this.loadLogicData(aclAttributes);
+
+                    if (!request.settled) {
+                        request.promise.then(() => this.syncInteractivity());
+                    }
+
+                    return false;
+                }
+
+                access = acl.checkModel(this.model, 'edit', true);
+            }
+
+            // Still undecidable (e.g. the user can't read teams): the click is allowed and the
+            // server decides; a refusal flips the switch back.
+            if (access === false) {
                 return false;
             }
 
@@ -82,6 +153,200 @@ define('toggle-switch:views/fields/bool', ['views/fields/bool', 'toggle-switch:h
             }
 
             return true;
+        }
+
+        /**
+         * Record attributes EspoCRM's access check uses besides assignedUserId/createdById.
+         *
+         * @private
+         * @return {string[]}
+         */
+        getAclAttributes() {
+            const entityType = this.entityType || this.model.entityType;
+            const fields = this.getMetadata().get(['entityDefs', entityType, 'fields']) || {};
+
+            return [
+                ['teams', 'teamsIds'],
+                ['assignedUsers', 'assignedUsersIds'],
+                ['collaborators', 'collaboratorsIds'],
+            ]
+                .filter(([field]) => fields[field] && !fields[field].disabled)
+                .map(([, attribute]) => attribute)
+                .sort();
+        }
+
+        /**
+         * The field's read-only Dynamic Logic conditions: "Conditions making field read-only" and,
+         * in EspoCRM 9.1+, "Saved state conditions making field read-only".
+         * 9.0 keeps the rules in clientDefs, newer versions in logicDefs.
+         *
+         * @private
+         * @return {Array[]} Condition groups.
+         */
+        getReadOnlyConditionGroups() {
+            const entityType = this.entityType || this.model.entityType;
+
+            const defs =
+                this.getMetadata().get(['logicDefs', entityType]) ||
+                this.getMetadata().get(['clientDefs', entityType, 'dynamicLogic']) ||
+                {};
+
+            const item = (defs.fields || {})[this.name] || {};
+
+            return ['readOnly', 'readOnlySaved']
+                .map(type => item[type] && item[type].conditionGroup)
+                .filter(group => Array.isArray(group) && group.length);
+        }
+
+        /**
+         * Whether Dynamic Logic makes the field read-only for this record.
+         * List rows and Kanban cards only hold saved data, so "saved state" rules are evaluated
+         * against the same values as on the record page.
+         *
+         * @private
+         * @return {boolean|null} Null while data needed by a rule is being loaded.
+         */
+        getLogicReadOnlyState() {
+            const groups = this.getReadOnlyConditionGroups();
+
+            if (!groups.length) {
+                return false;
+            }
+
+            const attributeSet = new Set();
+
+            groups.forEach(group => collectAttributes(group, attributeSet));
+
+            const attributes = [...attributeSet].sort();
+
+            if (!this.isLogicDataReady(this.model, attributes)) {
+                const request = this.loadLogicData(attributes);
+
+                // Re-check once the data arrives. A failed request stays settled without data,
+                // so the switch simply stays locked (no retry loop).
+                if (!request.settled) {
+                    request.promise.then(() => this.syncInteractivity());
+                }
+
+                return null;
+            }
+
+            // EspoCRM's own condition evaluation. It reads the record and the current user
+            // ($user.id, $user.teamsIds) through this minimal record-view interface.
+            const recordView = {
+                model: this.model,
+                getUser: () => this.getUser(),
+                getPreSaveAttributes: () => ({...this.model.attributes}),
+                getMetadata: () => this.getMetadata(),
+                getFieldManager: () => this.getFieldManager(),
+                getAcl: () => this.getAcl(),
+                getConfig: () => this.getConfig(),
+            };
+
+            try {
+                const logic = new DynamicLogic({}, recordView);
+
+                return groups.some(group => logic.checkConditionGroup(group));
+            }
+            catch (e) {
+                console.error('Toggle Switch: could not evaluate Dynamic Logic.', e);
+
+                // Fail safe: keep the switch locked rather than bypass a rule.
+                return true;
+            }
+        }
+
+        /**
+         * @private
+         * @param {module:model} model
+         * @param {string[]} attributes
+         * @return {boolean}
+         */
+        isLogicDataReady(model, attributes) {
+            const key = attributes.join(',');
+
+            if (model._tgsLogicLoaded && model._tgsLogicLoaded[key]) {
+                return true;
+            }
+
+            return attributes.every(attribute => model.has(attribute));
+        }
+
+        /**
+         * Loads attributes used by Dynamic Logic that are not list columns. One request covers all
+         * rows of the list (or Kanban column) that miss them; rows share the pending request.
+         *
+         * @private
+         * @param {string[]} attributes
+         * @return {{promise: Promise, settled: boolean}}
+         */
+        loadLogicData(attributes) {
+            const key = attributes.join(',');
+            const collection = this.model.collection;
+            const holder = collection || this.model;
+            const store = holder._tgsLogicRequests || (holder._tgsLogicRequests = {});
+            const requestKey = key + '|' + this.model.id;
+
+            if (store[requestKey]) {
+                return store[requestKey];
+            }
+
+            const candidates = collection && Array.isArray(collection.models) ?
+                collection.models : [this.model];
+
+            if (!candidates.includes(this.model)) {
+                candidates.push(this.model);
+            }
+
+            const targets = candidates.filter(model =>
+                model.id &&
+                !store[key + '|' + model.id] &&
+                !this.isLogicDataReady(model, attributes)
+            );
+
+            const entityType = this.entityType || this.model.entityType;
+
+            const request = {promise: null, settled: false};
+
+            request.promise = Espo.Ajax
+                .getRequest(entityType, {
+                    select: ['id', ...attributes].join(','),
+                    maxSize: targets.length,
+                    where: [{type: 'in', attribute: 'id', value: targets.map(model => model.id)}],
+                })
+                .then(response => {
+                    const rows = {};
+
+                    ((response && response.list) || []).forEach(row => rows[row.id] = row);
+
+                    targets.forEach(model => {
+                        const row = rows[model.id] || {};
+                        const values = {};
+
+                        attributes
+                            .filter(attribute => !model.has(attribute) && attribute in row)
+                            .forEach(attribute => values[attribute] = row[attribute]);
+
+                        if (Object.keys(values).length) {
+                            model.set(values, {silent: true});
+                        }
+
+                        // Attributes the user may not read stay absent, as on the record page.
+                        model._tgsLogicLoaded = model._tgsLogicLoaded || {};
+                        model._tgsLogicLoaded[key] = true;
+                    });
+                })
+                .catch(xhr => {
+                    // Background check only: no error popup.
+                    if (xhr && typeof xhr === 'object') {
+                        xhr.errorIsHandled = true;
+                    }
+                })
+                .then(() => request.settled = true);
+
+            targets.forEach(model => store[key + '|' + model.id] = request);
+
+            return store[requestKey] || request;
         }
 
         data() {
@@ -138,10 +403,41 @@ define('toggle-switch:views/fields/bool', ['views/fields/bool', 'toggle-switch:h
                 return;
             }
 
-            // Keep clicks from reaching list-row or panel handlers.
-            input.closest('label.tgs').addEventListener('click', e => e.stopPropagation());
+            const label = input.closest('label.tgs');
+
+            // Keep clicks from reaching list-row, Kanban card or panel handlers.
+            label.addEventListener('click', e => e.stopPropagation());
+
+            // An active switch must not start dragging the Kanban card it sits on.
+            const stopDrag = e => {
+                if (!input.disabled) {
+                    e.stopPropagation();
+                }
+            };
+
+            label.addEventListener('mousedown', stopDrag);
+            label.addEventListener('touchstart', stopDrag, {passive: true});
 
             input.addEventListener('change', () => this.onInstantChange(input));
+
+            // Data needed by a Dynamic Logic rule may have arrived during rendering.
+            this.syncInteractivity();
+        }
+
+        setup() {
+            super.setup();
+
+            if (!this.isToggleDisplay() || !this.params.toggleInstantSave) {
+                return;
+            }
+
+            // Re-check rules when other values of the record change, e.g. a Kanban card moved
+            // to another column or another field saved. The field's own value re-renders anyway.
+            this.listenTo(this.model, 'change', () => {
+                if (this.isListMode()) {
+                    this.syncInteractivity();
+                }
+            });
         }
 
         /**
@@ -273,7 +569,12 @@ define('toggle-switch:views/fields/bool', ['views/fields/bool', 'toggle-switch:h
             // A server-side hook or formula may have set a different value.
             if (!!this.model.get(this.name) !== input.checked && this.isRendered()) {
                 await this.reRender();
+
+                return;
             }
+
+            // A Dynamic Logic rule may depend on the value just saved.
+            this.syncInteractivity();
         }
 
         /**

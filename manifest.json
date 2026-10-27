@@ -3,7 +3,7 @@
     "description": "Displays Boolean fields as toggle switches with custom YES/NO text and icons, EspoCRM's standard colors, three sizes and optional save on click. English and Ukrainian included.",
     "author": "FrameVAS - Artem Vasylenko",
     "module": "ToggleSwitch",
-    "version": "1.0.1",
+    "version": "1.0.3",
     "acceptableVersions": [
         ">=9.0.0"
     ],
